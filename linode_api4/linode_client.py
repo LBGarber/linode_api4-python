@@ -1352,6 +1352,24 @@ class LinodeClient:
         d = Domain(self, result['id'], result)
         return d
 
+    def firewalls(self, *filters):
+        return self._get_and_filter(Firewall, *filters)
+
+    def firewall_create(self, label, rules=None, **kwargs):
+        params = {
+            'label': label,
+            'rules': rules,
+        }
+        params.update(kwargs)
+
+        result = self.post('/networking/firewalls', data=params)
+
+        if not 'id' in result:
+            raise UnexpectedResponseError('Unexpected response when creating Firewall!', json=result)
+
+        f = Firewall(self, result['id'], result)
+        return f
+
     def tags(self, *filters):
         """
         Retrieves the Tags on your account.  This may only be attempted by

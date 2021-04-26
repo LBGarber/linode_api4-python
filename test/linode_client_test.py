@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from test.base import ClientBaseCase
@@ -9,6 +10,7 @@ class LinodeClientGeneralTest(ClientBaseCase):
     """
     Tests methods of the LinodeClient class that do not live inside of a group.
     """
+
     def test_get_no_empty_body(self):
         """
         Tests that a valid JSON body is passed for a GET call
@@ -35,7 +37,7 @@ class LinodeClientGeneralTest(ClientBaseCase):
         self.assertEqual(a.zip, '19106')
         self.assertEqual(a.tax_id, '')
         self.assertEqual(a.balance, 0)
-        self.assertEqual(a.capabilities, ["Linodes","NodeBalancers","Block Storage","Object Storage"])
+        self.assertEqual(a.capabilities, ["Linodes", "NodeBalancers", "Block Storage", "Object Storage"])
 
     def test_get_regions(self):
         r = self.client.regions()
@@ -46,9 +48,9 @@ class LinodeClientGeneralTest(ClientBaseCase):
             self.assertIsNotNone(region.id)
             self.assertIsNotNone(region.country)
             if region.id in ('us-east', 'eu-central', 'ap-south'):
-                self.assertEqual(region.capabilities, ["Linodes","NodeBalancers","Block Storage","Object Storage"])
+                self.assertEqual(region.capabilities, ["Linodes", "NodeBalancers", "Block Storage", "Object Storage"])
             else:
-                self.assertEqual(region.capabilities, ["Linodes","NodeBalancers","Block Storage"])
+                self.assertEqual(region.capabilities, ["Linodes", "NodeBalancers", "Block Storage"])
             self.assertEqual(region.status, "ok")
             self.assertIsNotNone(region.resolvers)
             self.assertIsNotNone(region.resolvers.ipv4)
@@ -78,11 +80,11 @@ class LinodeClientGeneralTest(ClientBaseCase):
         self.assertEqual(domain.retry_sec, 0)
         self.assertEqual(domain.ttl_sec, 300)
         self.assertEqual(domain.status, 'active')
-        self.assertEqual(domain.master_ips, [],)
-        self.assertEqual(domain.description, "",)
-        self.assertEqual(domain.group, "",)
-        self.assertEqual(domain.expire_sec, 0,)
-        self.assertEqual(domain.soa_email, "test@example.org",)
+        self.assertEqual(domain.master_ips, [], )
+        self.assertEqual(domain.description, "", )
+        self.assertEqual(domain.group, "", )
+        self.assertEqual(domain.expire_sec, 0, )
+        self.assertEqual(domain.soa_email, "test@example.org", )
         self.assertEqual(domain.refresh_sec, 0)
 
     def test_image_create(self):
@@ -130,7 +132,7 @@ class LinodeClientGeneralTest(ClientBaseCase):
         Tests that creating a tag works as expected
         """
         # tags don't work like a normal RESTful collection, so we have to do this
-        with self.mock_post({'label':'nothing'}) as m:
+        with self.mock_post({'label': 'nothing'}) as m:
             t = self.client.tag_create('nothing')
 
             self.assertIsNotNone(t)
@@ -151,7 +153,7 @@ class LinodeClientGeneralTest(ClientBaseCase):
         volume1, volume2 = self.client.volumes()[:2]
 
         # tags don't work like a normal RESTful collection, so we have to do this
-        with self.mock_post({'label':'pytest'}) as m:
+        with self.mock_post({'label': 'pytest'}) as m:
             t = self.client.tag_create('pytest',
                                        instances=[instance1.id, instance2],
                                        nodebalancers=[nodebalancer1.id, nodebalancer2],
@@ -180,7 +182,7 @@ class LinodeClientGeneralTest(ClientBaseCase):
         volume = self.client.volumes().first()
 
         # tags don't work like a normal RESTful collection, so we have to do this
-        with self.mock_post({'label':'pytest'}) as m:
+        with self.mock_post({'label': 'pytest'}) as m:
             t = self.client.tag_create('pytest',
                                        entities=[instance1, domain, nodebalancer, volume, instance2])
 
@@ -201,6 +203,7 @@ class AccountGroupTest(ClientBaseCase):
     """
     Tests methods of the AccountGroup
     """
+
     def test_get_settings(self):
         """
         Tests that account settings can be retrieved.
@@ -229,10 +232,48 @@ class AccountGroupTest(ClientBaseCase):
         self.assertEqual(invoice.total, 9.51)
 
 
+class FirewallGroupTest(ClientBaseCase):
+    def test_firewall_create(self):
+        with self.mock_post('networking/firewalls/123') as m:
+            rules = {
+                'outbound': [],
+                'outbound_policy': 'DROP',
+                'inbound': [],
+                'inbound_policy': 'DROP'
+            }
+
+            f = self.client.firewall_create('test-firewall-1', rules,
+                                            status='enabled')
+
+            self.assertIsNotNone(f)
+
+            self.assertEqual(m.call_url, '/networking/firewalls')
+            self.assertEqual(m.method, 'post')
+
+            self.assertEqual(f.id, 123)
+            self.assertEqual(m.call_data, {
+                'label': 'test-firewall-1',
+                'status': 'enabled',
+                'rules': rules
+            })
+
+    def test_get_firewalls(self):
+        """
+        Tests that firewalls can be retrieved
+        """
+        f = self.client.firewalls()
+
+        self.assertEqual(len(f), 1)
+        firewall = f[0]
+
+        self.assertEqual(firewall.id, 123)
+
+
 class LinodeGroupTest(ClientBaseCase):
     """
     Tests methods of the LinodeGroup
     """
+
     def test_instance_create(self):
         """
         Tests that a Linode Instance can be created successfully
@@ -275,6 +316,7 @@ class LongviewGroupTest(ClientBaseCase):
     """
     Tests methods of the LongviewGroup
     """
+
     def test_get_clients(self):
         """
         Tests that a list of LongviewClients can be retrieved
@@ -339,6 +381,7 @@ class LKEGroupTest(ClientBaseCase):
     """
     Tests methods of the LKEGroupTest
     """
+
     def test_kube_version(self):
         """
         Tests that KubeVersions can be retrieved
@@ -393,6 +436,7 @@ class ProfileGroupTest(ClientBaseCase):
     """
     Tests methods of the ProfileGroup
     """
+
     def test_get_sshkeys(self):
         """
         Tests that a list of SSH Keys can be retrieved
@@ -431,6 +475,7 @@ class ProfileGroupTest(ClientBaseCase):
             client = self.client.longview.client_create()
 
             self.assertIsNotNone(client)
+
             self.assertEqual(client.id, 5678)
             self.assertEqual(client.label, 'longview5678')
 
@@ -443,21 +488,21 @@ class ProfileGroupTest(ClientBaseCase):
         """
         with self.mock_post('profile/sshkeys/72') as m:
             key = self.client.profile.ssh_key_upload(
-                         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDe9NlKepJsI/S98"
-                         "ISBJmG+cpEARtM0T1Qa5uTOUB/vQFlHmfQW07ZfA++ybPses0vRCD"
-                         "eWyYPIuXcV5yFrf8YAW/Am0+/60MivT3jFY0tDfcrlvjdJAf1NpWO"
-                         "TVlzv0gpsHFO+XIZcfEj3V0K5+pOMw9QGVf6Qbg8qzHVDPFdYKu3i"
-                         "muc9KHY8F/b4DN/Wh17k3xAJpspCZEFkn0bdaYafJj0tPs0k78JRo"
-                         "F2buc3e3M6dlvHaoON1votmrri9lut65OIpglOgPwE3QU8toGyyoC"
-                         "MGaT4R7kIRjXy3WSyTMAi0KTAdxRK+IlDVMXWoE5TdLovd0a9L7qy"
-                         "nZungKhKZUgFma7r9aTFVHXKh29Tzb42neDTpQnZ/Et735sDC1vfz"
-                         "/YfgZNdgMUXFJ3+uA4M/36/Vy3Dpj2Larq3qY47RDFitmwSzwUlfz"
-                         "tUoyiQ7e1WvXHT4N4Z8K2FPlTvNMg5CSjXHdlzcfiRFPwPn13w36v"
-                         "TvAUxPvTa84P1eOLDp/JzykFbhHNh8Cb02yrU28zDeoTTyjwQs0eH"
-                         "d1wtgIXJ8wuUgcaE4LgcgLYWwiKTq4/FnX/9lfvuAiPFl6KLnh23b"
-                         "cKwnNA7YCWlb1NNLb2y+mCe91D8r88FGvbnhnOuVjd/SxQWDHtxCI"
-                         "CmhW7erNJNVxYjtzseGpBLmRRUTsT038w==dorthu@dorthu-command",
-                         'Work Laptop')
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDe9NlKepJsI/S98"
+                "ISBJmG+cpEARtM0T1Qa5uTOUB/vQFlHmfQW07ZfA++ybPses0vRCD"
+                "eWyYPIuXcV5yFrf8YAW/Am0+/60MivT3jFY0tDfcrlvjdJAf1NpWO"
+                "TVlzv0gpsHFO+XIZcfEj3V0K5+pOMw9QGVf6Qbg8qzHVDPFdYKu3i"
+                "muc9KHY8F/b4DN/Wh17k3xAJpspCZEFkn0bdaYafJj0tPs0k78JRo"
+                "F2buc3e3M6dlvHaoON1votmrri9lut65OIpglOgPwE3QU8toGyyoC"
+                "MGaT4R7kIRjXy3WSyTMAi0KTAdxRK+IlDVMXWoE5TdLovd0a9L7qy"
+                "nZungKhKZUgFma7r9aTFVHXKh29Tzb42neDTpQnZ/Et735sDC1vfz"
+                "/YfgZNdgMUXFJ3+uA4M/36/Vy3Dpj2Larq3qY47RDFitmwSzwUlfz"
+                "tUoyiQ7e1WvXHT4N4Z8K2FPlTvNMg5CSjXHdlzcfiRFPwPn13w36v"
+                "TvAUxPvTa84P1eOLDp/JzykFbhHNh8Cb02yrU28zDeoTTyjwQs0eH"
+                "d1wtgIXJ8wuUgcaE4LgcgLYWwiKTq4/FnX/9lfvuAiPFl6KLnh23b"
+                "cKwnNA7YCWlb1NNLb2y+mCe91D8r88FGvbnhnOuVjd/SxQWDHtxCI"
+                "CmhW7erNJNVxYjtzseGpBLmRRUTsT038w==dorthu@dorthu-command",
+                'Work Laptop')
 
             self.assertIsNotNone(key)
             self.assertEqual(key.id, 72)
@@ -465,27 +510,29 @@ class ProfileGroupTest(ClientBaseCase):
 
             self.assertEqual(m.call_url, '/profile/sshkeys')
             self.assertEqual(m.call_data, {
-                "ssh_key":  "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDe9NlKepJsI/S98"
-                            "ISBJmG+cpEARtM0T1Qa5uTOUB/vQFlHmfQW07ZfA++ybPses0vRCD"
-                            "eWyYPIuXcV5yFrf8YAW/Am0+/60MivT3jFY0tDfcrlvjdJAf1NpWO"
-                            "TVlzv0gpsHFO+XIZcfEj3V0K5+pOMw9QGVf6Qbg8qzHVDPFdYKu3i"
-                            "muc9KHY8F/b4DN/Wh17k3xAJpspCZEFkn0bdaYafJj0tPs0k78JRo"
-                            "F2buc3e3M6dlvHaoON1votmrri9lut65OIpglOgPwE3QU8toGyyoC"
-                            "MGaT4R7kIRjXy3WSyTMAi0KTAdxRK+IlDVMXWoE5TdLovd0a9L7qy"
-                            "nZungKhKZUgFma7r9aTFVHXKh29Tzb42neDTpQnZ/Et735sDC1vfz"
-                            "/YfgZNdgMUXFJ3+uA4M/36/Vy3Dpj2Larq3qY47RDFitmwSzwUlfz"
-                            "tUoyiQ7e1WvXHT4N4Z8K2FPlTvNMg5CSjXHdlzcfiRFPwPn13w36v"
-                            "TvAUxPvTa84P1eOLDp/JzykFbhHNh8Cb02yrU28zDeoTTyjwQs0eH"
-                            "d1wtgIXJ8wuUgcaE4LgcgLYWwiKTq4/FnX/9lfvuAiPFl6KLnh23b"
-                            "cKwnNA7YCWlb1NNLb2y+mCe91D8r88FGvbnhnOuVjd/SxQWDHtxCI"
-                            "CmhW7erNJNVxYjtzseGpBLmRRUTsT038w==dorthu@dorthu-command",
+                "ssh_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDe9NlKepJsI/S98"
+                           "ISBJmG+cpEARtM0T1Qa5uTOUB/vQFlHmfQW07ZfA++ybPses0vRCD"
+                           "eWyYPIuXcV5yFrf8YAW/Am0+/60MivT3jFY0tDfcrlvjdJAf1NpWO"
+                           "TVlzv0gpsHFO+XIZcfEj3V0K5+pOMw9QGVf6Qbg8qzHVDPFdYKu3i"
+                           "muc9KHY8F/b4DN/Wh17k3xAJpspCZEFkn0bdaYafJj0tPs0k78JRo"
+                           "F2buc3e3M6dlvHaoON1votmrri9lut65OIpglOgPwE3QU8toGyyoC"
+                           "MGaT4R7kIRjXy3WSyTMAi0KTAdxRK+IlDVMXWoE5TdLovd0a9L7qy"
+                           "nZungKhKZUgFma7r9aTFVHXKh29Tzb42neDTpQnZ/Et735sDC1vfz"
+                           "/YfgZNdgMUXFJ3+uA4M/36/Vy3Dpj2Larq3qY47RDFitmwSzwUlfz"
+                           "tUoyiQ7e1WvXHT4N4Z8K2FPlTvNMg5CSjXHdlzcfiRFPwPn13w36v"
+                           "TvAUxPvTa84P1eOLDp/JzykFbhHNh8Cb02yrU28zDeoTTyjwQs0eH"
+                           "d1wtgIXJ8wuUgcaE4LgcgLYWwiKTq4/FnX/9lfvuAiPFl6KLnh23b"
+                           "cKwnNA7YCWlb1NNLb2y+mCe91D8r88FGvbnhnOuVjd/SxQWDHtxCI"
+                           "CmhW7erNJNVxYjtzseGpBLmRRUTsT038w==dorthu@dorthu-command",
                 "label": "Work Laptop"
             })
+
 
 class ObjectStorageGroupTest(ClientBaseCase):
     """
     Tests for the ObjectStorageGroup
     """
+
     def test_get_clusters(self):
         """
         Tests that Object Storage Clusters can be retrieved
@@ -532,4 +579,4 @@ class ObjectStorageGroupTest(ClientBaseCase):
             self.assertEqual(keys.label, 'object-storage-key-1')
 
             self.assertEqual(m.call_url, '/object-storage/keys')
-            self.assertEqual(m.call_data, {"label":"object-storage-key-1"})
+            self.assertEqual(m.call_data, {"label": "object-storage-key-1"})

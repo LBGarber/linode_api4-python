@@ -7,6 +7,7 @@ from .linode import *
 from .volume import Volume
 from .domain import *
 from .account import *
+from .firewall import *
 from .networking import *
 from .nodebalancer import *
 from .support import *
